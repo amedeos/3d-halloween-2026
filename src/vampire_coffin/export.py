@@ -18,19 +18,25 @@ import trimesh
 from build123d import Color, Mesher, Part, Pos, export_stl
 
 from . import params as P
-from .assembly import parts_at
+from .assembly import scene_parts
 from .box import make_box
 from .coupon import coupon_parts
-from .lid import lid_base, lid_relief, make_lid
+from .kinematics import theta
+from .lid import make_lid
 from .nail import make_nail
 from .nail import print_pose as nail_pose
-from .vampire import make_vampire
+from .vampire import coloured, make_vampire
 from .vampire import print_pose as vampire_pose
 
 BED = (250.0, 210.0, 220.0)  # Prusa MK4
-M600_Z = P.layer_top(P.LID_T)  # print_z of the first relief layer (lid on the bed)
+M600_Z = P.layer_top(P.LID_T)  # lid: print_z of the first relief layer -> orange
+VAMPIRE_M600_Z = P.layer_top(P.CAPE_T)  # vampire: black cape and collar, then white bones
+# the colour changes each plate must have: (print_z, new colour). slicer.py checks the
+# real G-code against this table, not against the 3MF it is checking.
+PLANNED_M600 = {"plate_2_lid_black_then_orange": (M600_Z, "orange"),
+                "plate_3_vampire_black_then_white": (VAMPIRE_M600_Z, "white")}
 STL_TOLERANCE = (0.01, 0.1)  # linear (mm), angular (rad)
-COLOURS = {"black": "#1c1a1e", "orange": "#f07318", "white": "#ece8dc"}
+COLOURS = {"black": "#1c1a1e", "orange": "#f07318", "white": "#ece8dc", "grey": "#4a494e"}
 
 
 def printable_parts() -> dict[str, Part]:
@@ -38,7 +44,7 @@ def printable_parts() -> dict[str, Part]:
     return {
         "box_black": make_box(),
         "lid_black_M600_orange": Pos(0, 0, -P.BOX_H) * make_lid(),
-        "vampire_white": vampire_pose(make_vampire()),
+        "vampire_black_M600_white": vampire_pose(make_vampire()),
         "nail_black_x2": nail_pose(make_nail()),
     }
 
@@ -87,8 +93,11 @@ def _row(parts: list[Part], gap: float = 8.0, y_centre: float = BED[1] / 2) -> l
     return placed
 
 
-def plates() -> dict[str, tuple[list[tuple[str, Part, str]], float | None]]:
-    """plate name -> ([(object name, part on the bed, colour)], M600 height or None)."""
+def plates() -> dict[str, tuple[list[tuple[str, Part, str]], tuple[float, str] | None]]:
+    """plate name -> ([(object name, part on the bed, colour)], colour change or None).
+
+    A colour change is (print_z, new colour): the M600 comes before the layer at print_z.
+    """
     pp, cp = printable_parts(), coupon_parts()
     nail = pp["nail_black_x2"]
     box, n1, n2 = _row([pp["box_black"], nail, nail], gap=10)
@@ -98,8 +107,12 @@ def plates() -> dict[str, tuple[list[tuple[str, Part, str]], float | None]]:
         "plate_1_black_box_and_nails": (
             [("box", box, "black"), ("nail", n1, "black"), ("nail", n2, "black")], None),
         "plate_2_lid_black_then_orange": (
-            [("lid", _row([pp["lid_black_M600_orange"]])[0], "black")], M600_Z),
-        "plate_3_white_vampire": ([("vampire", _row([pp["vampire_white"]])[0], "white")], None),
+            [("lid", _row([pp["lid_black_M600_orange"]])[0], "black")],
+            PLANNED_M600["plate_2_lid_black_then_orange"]),
+        # the object colour is the starting filament; the M600 switches to the second one
+        "plate_3_vampire_black_then_white": (
+            [("vampire", _row([pp["vampire_black_M600_white"]])[0], "black")],
+            PLANNED_M600["plate_3_vampire_black_then_white"]),
         "coupon_all_pieces": (
             [(n, p, coupon_colour.get(n, "black"))
              for n, p in zip(coupon_names, _row([cp[n] for n in coupon_names]))], None),
@@ -113,34 +126,32 @@ def _named(part: Part, name: str, colour: str) -> Part:
     return part
 
 
-def m600_metadata(print_z: float) -> str:
+def m600_metadata(print_z: float, colour: str) -> str:
     """PrusaSlicer's colour-change list, as stored inside its 3MF files."""
     return ('<?xml version="1.0" encoding="utf-8"?>\n<custom_gcodes_per_print_z>\n'
-            f'<code print_z="{print_z:.2f}" type="0" extruder="1" color="{COLOURS["orange"]}" '
+            f'<code print_z="{print_z:.2f}" type="0" extruder="1" color="{COLOURS[colour]}" '
             'extra="" gcode="M600"/>\n<mode value="SingleExtruder"/>\n'
             '</custom_gcodes_per_print_z>\n')
 
 
-def write_3mf(path: Path, objects: list[tuple[str, Part, str]], m600_z: float | None = None):
+def write_3mf(path: Path, objects: list[tuple[str, Part, str]],
+              change: tuple[float, str] | None = None):
     mesher = Mesher()
     for name, part, colour in objects:
         mesher.add_shape(_named(part, name, colour), linear_deflection=STL_TOLERANCE[0],
                          angular_deflection=STL_TOLERANCE[1])
     mesher.write(str(path))
-    if m600_z is not None:
+    if change is not None:
         with zipfile.ZipFile(path, "a", zipfile.ZIP_DEFLATED) as z:
             z.writestr("Metadata/Prusa_Slicer_custom_gcode_per_print_z.xml",
-                       m600_metadata(m600_z))
+                       m600_metadata(*change))
 
 
 def assembly_preview() -> list[tuple[str, Part, str]]:
     """The coffin fully open, vampire sitting up, lid relief in orange (view only)."""
-    placed = parts_at(P.S_MAX)
-    moved = Pos(P.S_MAX, 0, 0)
-    return [("box", placed["box"], "black"), ("lid", moved * lid_base(), "black"),
-            ("lid relief", moved * lid_relief(), "orange"),
-            ("nail", placed["nail_r"], "black"), ("nail", placed["nail_l"], "black"),
-            ("vampire", placed["vampire"], "white")]
+    names = {"black": "vampire cape", "white": "vampire"}
+    vampire = [(names[c], part, c) for part, c in coloured(theta(P.S_MAX))]
+    return [(name, part, colour) for part, colour, name in scene_parts(P.S_MAX)] + vampire
 
 
 def export_all(out: Path, coupon: bool = True) -> dict[str, list[str]]:
@@ -155,14 +166,14 @@ def export_all(out: Path, coupon: bool = True) -> dict[str, list[str]]:
         report[name] = problems
         status = "OK" if not problems else "; ".join(problems)
         print(f"{name:30s} {part.volume / 1000:6.1f} cm3  {status}")
-    for name, (objects, m600_z) in plates().items():
-        write_3mf(mf_dir / f"{name}.3mf", objects, m600_z)
-        note = f"  (M600 at Z = {m600_z:.2f} mm)" if m600_z else ""
-        print(f"{name + '.3mf':30s} {len(objects)} object(s){note}")
+    for name, (objects, change) in plates().items():
+        write_3mf(mf_dir / f"{name}.3mf", objects, change)
+        note = f"  (M600 at Z = {change[0]:.2f} mm, then {change[1]})" if change else ""
+        print(f"{name + '.3mf':34s} {len(objects)} object(s){note}")
     write_3mf(mf_dir / "assembly_preview.3mf", assembly_preview())
-    print(f"{'assembly_preview.3mf':30s} view only")
-    print(f"\nLid: the colour change (M600) goes at layer Z = {M600_Z:.2f} mm (0.2 mm layers). "
-          "It is already set in the 3MF plates.")
+    print(f"{'assembly_preview.3mf':34s} view only")
+    print(f"\nColour changes (M600, 0.2 mm layers): lid at Z = {M600_Z:.2f} mm (orange), "
+          f"vampire at Z = {VAMPIRE_M600_Z:.2f} mm (white). The 3MF plates already have them.")
     return report
 
 

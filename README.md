@@ -7,6 +7,9 @@ A classic six-sided coffin. **Pull the lid towards you (towards the feet)**. Hal
 the movement, the vampire skeleton sits up to 70° and stares at you over the lid. Push the
 lid back and he lies down again.
 
+The vampire wears a black cape and a high collar, and he has fangs. He lies on a satin
+pillow on a quilted floor. There is a small candy stash at his feet.
+
 The model is fully parametric. It is written in Python with
 [build123d](https://github.com/gumyr/build123d).
 
@@ -44,8 +47,8 @@ uv run pytest                              # kinematics, printable parts, collis
 uv run python -m vampire_coffin.kinematics # table: lid travel -> sit-up angle
 uv run python -m vampire_coffin.export     # STL files (out/stl) and 3MF plates (out/3mf)
 uv run python -m vampire_coffin.slicer     # optional, needs PrusaSlicer: times + projects
-uv run python -m vampire_coffin.render     # PNG previews in out/render (no OpenGL needed)
-uv run python -m vampire_coffin.render --gif  # ...plus an animated GIF of the vampire sitting up
+uv run python -m vampire_coffin.render     # listing images in out/render (no OpenGL needed)
+uv run python -m vampire_coffin.render --gif  # ...plus the GIFs (sitting up, mechanism)
 ```
 
 `export` exits with status 1 if a part has a problem. You can find every size and
@@ -55,8 +58,8 @@ clearance in `src/vampire_coffin/params.py`.
 
 Prusa MK4 (Input Shaper firmware), **Prusament PETG** (PLA also works), 0.4 mm nozzle,
 **0.20mm STRUCTURAL** profile, **no supports**. PrusaSlicer confirms this: even with
-automatic supports turned on, it does not generate any. Use the textured or satin sheet: PETG sticks too
-much to the smooth PEI sheet.
+automatic supports turned on, it does not generate any. Use the textured or satin sheet:
+PETG sticks too much to the smooth PEI sheet.
 
 There are three kinds of files. Use whichever you like:
 
@@ -69,13 +72,13 @@ There are three kinds of files. Use whichever you like:
 
 | Plate (3MF) | Parts | Colour | Time* | Filament* |
 |---|---|---|---|---|
-| `plate_1_black_box_and_nails` | box + 2 nails | black | 3 h 03 min | 68 g |
-| `plate_2_lid_black_then_orange` | lid | black, then orange | 1 h 01 min | 28 g |
-| `plate_3_white_vampire` | vampire | white | 39 min | 9 g |
-| `coupon_all_pieces` | tolerance coupon | any, no colour change | 48 min | 13 g |
+| `plate_1_black_box_and_nails` | box + 2 nails | black | 3 h 08 min | 68 g |
+| `plate_2_lid_black_then_orange` | lid | black, then orange at 5.20 mm | 1 h 01 min | 28 g |
+| `plate_3_vampire_black_then_white` | vampire | black, then white at 1.80 mm | 40 min | 9 g |
+| `coupon_all_pieces` | tolerance coupon | any, no colour change | 47 min | 12 g |
 
 \* PrusaSlicer 2.9.6 estimates (Prusament PETG, 0.20mm STRUCTURAL). The whole coffin takes
-about 4 h 45 min.
+about 4 h 50 min.
 
 ### Designed for 0.2 mm layers and 0.45 mm lines
 
@@ -84,22 +87,31 @@ The model follows the slicer grid, so nothing gets rounded away:
 - **Layers.** In its print position, every flat horizontal face sits on a layer boundary
   (a multiple of 0.2 mm). Examples: the lid is 5.0 mm (25 layers), the relief 1.2 mm
   (6 layers), the floor 2.0 mm (10 layers), and the rail top is at 43.0 mm.
-- **Colour change.** The relief starts at 5.0 mm, so its first layer is printed from 5.0 to
-  5.2 mm. The M600 goes before that layer (Z = 5.20 mm). PrusaSlicer's G-code confirms it.
+- **Colour changes.** The lid relief starts at 5.0 mm, so its first layer is printed from
+  5.0 to 5.2 mm, and the M600 goes before it (Z = 5.20 mm). The vampire's cape and collar
+  are exactly 1.6 mm (8 layers) thick, so the bones start white at Z = 1.80 mm.
+  PrusaSlicer's G-code confirms both.
 - **Lines.** The walls are exactly 4 lines wide (1.67 mm): 2 perimeters on each side, with
   no gap fill. The rim band makes the top 6 lines wide.
 - **Small details.** Gaps and grooves are at least one line wide, so they don't close up.
-  The thinnest strokes of the lettering are wider than Arachne's minimum line.
-
+  The thinnest strokes of the lettering are wider than Arachne's minimum line, and the tips
+  of the fangs are two lines wide.
 - **No islands.** Every layer rests on the layer below. Nothing starts in mid-air, and all
   overhangs are 45° or steeper.
 
 `tests/test_layers.py` checks all of this. If you change `LAYER` or `LINE_W` in
 `params.py`, the tests show which faces no longer fit the grid.
 
-**The lid needs one colour change (M600) at layer Z = 5.20 mm.** The cross, the border and
-R.I.P. come out orange. The 3MF files already contain it. With the STL file, add it yourself:
-open the preview, move the vertical slider to the 5.20 layer and click the orange **+**.
+**Two parts need a colour change (M600).** The 3MF files already contain them. With the STL
+files, add them yourself: open the preview, move the vertical slider to the layer and click
+the **+**.
+
+- **Lid:** at Z = 5.20 mm, from black to orange. The cross, the border and R.I.P. come out
+  orange.
+- **Vampire:** at Z = 1.80 mm, from black to white. The cape and the collar stay black.
+
+The text for the Printables page is in `listing/printables.md`, and the photo and video
+plan in `listing/shot-list.md`.
 
 `slicer.py` needs PrusaSlicer with the MK4 profiles installed. If `prusa-slicer` is not on
 your PATH, set `PRUSA_SLICER`, for example

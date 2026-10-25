@@ -169,21 +169,64 @@ def gif(frames_items, path, duration=80, **kw):
 
 
 # The vampire faces the foot end when he sits up: look from the feet, over the lid.
-FROM_FEET = {"elev": 18, "azim": 25, "zoom": 1.35, "target": (75, 0, 45)}
+FROM_FEET = {"elev": 18, "azim": 25, "zoom": 1.6, "target": (95, 0, 45)}
+CLOSE_UP = {"elev": 16, "azim": 20, "zoom": 3.4, "target": (64, 0, 55)}  # the vampire's face
 FROM_SIDE = {"elev": 22, "azim": -80, "zoom": 1.3, "target": (75, 0, 35)}
+# straight from the side, slightly above: for the cutaway of the mechanism
+CUTAWAY = {"elev": 6, "azim": -90, "zoom": 2.0, "target": (78, 0, 30)}
 
-if __name__ == "__main__":
+
+def exploded():
+    """All parts stacked above each other, lid closed: what goes where."""
+    from build123d import Pos
+
+    from .assembly import scene_parts
+    from .vampire import coloured
+
+    up = {"box": 0, "lid": 105, "lid relief": 105, "nail": 140}
+    items = [(Pos(0, 0, up[name]) * part, colour) for part, colour, name in scene_parts(0)]
+    return items + [(Pos(0, 0, 55) * part, colour) for part, colour in coloured(0)]
+
+
+def cutaway(s: float):
+    """The near side of box and lid removed: the nail pushes the lever."""
+    from . import params as P
+    from .assembly import scene_parts
+    from .kinematics import theta
+    from .shapes import box_between
+    from .vampire import coloured
+
+    # keep everything with y > -9, along the full length of the box and the slid lid
+    keep = box_between(-10, P.BOX_L + P.S_MAX + 10, -9.0, 60, -5, 100)
+    items = [(part if name == "nail" else part & keep, colour)
+             for part, colour, name in scene_parts(s)]
+    return items + coloured(theta(s))
+
+
+def listing(out: Path, with_gifs: bool = False) -> None:
+    """Every image for the Printables page."""
     from . import params as P
     from .assembly import scene
     from .kinematics import S_DWELL
 
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    out = Path(args[0] if args else "out/render")
     out.mkdir(parents=True, exist_ok=True)
     render(scene(0), out / "closed.png", elev=35, azim=-60, zoom=1.2)
     render(scene(P.S_MAX), out / "open_from_feet.png", **FROM_FEET)
     render(scene(P.S_MAX), out / "open_side.png", **FROM_SIDE)
-    if "--gif" in sys.argv:
+    render(scene(P.S_MAX), out / "close_up.png", **CLOSE_UP, size=(800, 800))
+    render(scene(P.S_MAX, lid=False), out / "inside.png", elev=40, azim=20, zoom=1.6,
+           target=(45, 0, 20))
+    render(exploded(), out / "exploded.png", elev=20, azim=-55, zoom=1.15, size=(900, 900))
+    for name, s in [("closed", 0.0), ("rising", (S_DWELL + P.S_MAX) / 2), ("open", P.S_MAX)]:
+        render(cutaway(s), out / f"mechanism_{name}.png", **CUTAWAY)
+    if with_gifs:
         steps = [S_DWELL - 20 + (P.S_MAX - S_DWELL + 20) * k / 15 for k in range(16)]
         gif((scene(s) for s in steps), out / "sit_up.gif", size=(600, 470), **FROM_FEET)
-    print("wrote", out)
+        gif((cutaway(s) for s in steps), out / "mechanism.gif", size=(600, 470), **CUTAWAY)
+
+
+if __name__ == "__main__":
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    target = Path(args[0] if args else "out/render")
+    listing(target, with_gifs="--gif" in sys.argv)
+    print("wrote", target)

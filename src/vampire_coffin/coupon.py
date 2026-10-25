@@ -26,7 +26,7 @@ def bearing_piece() -> Part:
 
 def pelvis_piece() -> Part:
     """Pelvis, levers and hip stubs of the vampire, printed on its back."""
-    return vampire_pose(make_vampire() & box_between(-24, 6, -30, 30, -10, 40))
+    return vampire_pose(make_vampire() & box_between(-20, 6, -30, 30, -10, 40))
 
 
 def rail_piece() -> Part:

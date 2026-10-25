@@ -14,8 +14,9 @@ Guidance for coding agents working in this repository.
   printability 15. The judge (3DPrintingDoctor) prints the best entries, so every part
   must print reliably without supports.
 - **Printer:** Prusa MK4 (Input Shaper firmware) with one extruder. Colours come from
-  separate parts, or from one M600 colour change on the lid. Keep the total print time
-  under about 6 hours (now about 4 h 45 min).
+  separate parts and from two M600 colour changes: the lid (cross and lettering orange)
+  and the vampire (black cape and collar, white bones). Keep the total print time
+  under about 6 hours (now about 4 h 50 min).
 - **Slicer profile:** PrusaSlicer "Original Prusa MK4 Input Shaper 0.4 nozzle",
   "0.20mm STRUCTURAL @MK4IS 0.4", "Prusament PETG @PGIS". 0.2 mm layers (first layer too),
   0.45 mm lines, 2 perimeters (Arachne), 4 bottom / 5 top solid layers.
@@ -61,9 +62,10 @@ uv run python -m vampire_coffin.render     # PNG previews -> out/render (add --g
 | `coupon.py` | Tolerance test pieces, cut from the real parts |
 | `export.py` | STL export in print orientation, plus checks (valid, on the bed, fits the bed, watertight mesh). 3MF plates (one per print job, named and coloured, M600 as PrusaSlicer metadata) and a coloured assembly preview. |
 | `slicer.py` | Optional. Slices the plates with the PrusaSlicer CLI (MK4 + 0.20mm STRUCTURAL + Prusament PETG). It checks the M600 (present exactly where needed, at the right Z), runs a second slice with automatic supports on (bridges excluded) that must create no support, and writes project 3MFs with the full config taken from the G-code. |
-| `render.py` | numpy z-buffer renderer (no OpenGL), PNG and GIF. `FROM_FEET` is the hero view. |
+| `render.py` | numpy z-buffer renderer (no OpenGL), PNG and GIF. `listing()` makes every image for the Printables page: hero view from the feet (`FROM_FEET`), exploded view, cutaway of the mechanism, GIFs. |
 | `fonts/` | The bundled font, shipped inside the package |
 | `tests/` | pytest suite. Keep it green. |
+| `listing/` | Printables page text (`printables.md`) and the photo/video plan (`shot-list.md`) |
 
 ## Frames
 
@@ -74,6 +76,19 @@ uv run python -m vampire_coffin.render     # PNG previews -> out/render (add --g
   assembly frame.
 - When he sits up, the vampire **faces the foot end**. Take the main photos and renders
   from the feet, looking over the lid.
+
+## Look of the vampire
+
+- The face is carved, not built up, so nothing overhangs: slanted eye sockets, a heart
+  nose, a mouth pocket, teeth grooves and fangs that are two lines wide at the tip.
+- The black cape and the high collar are plates on the back plane, exactly `CAPE_T` thick.
+  They make the figure wider than the ribcage: `COLLAR_HW` (17.4 mm) is the real half width,
+  `FIG_HW` (12.8 mm) is only the ribcage.
+- Use `vampire.coloured(theta)` and `assembly.scene_parts(s)` when you need coloured parts;
+  do not split the vampire or the lid again yourself.
+- Judge every change on the hero view: sitting at 70°, seen from the feet
+  (`render.FROM_FEET`). Do not change `_wing`'s hub, `_lever` or `_stub`: they are part of
+  the mechanism.
 
 ## Mechanism (do not break it)
 
@@ -96,8 +111,10 @@ uv run python -m vampire_coffin.render     # PNG previews -> out/render (add --g
   `WALL = lines(4)` gives 2 perimeters on each side, with no gap fill.
 - Gaps and grooves must be at least `LINE_W` wide, and raised strokes at least 85 % of
   `LINE_W` (Arachne's minimum line width).
-- The M600 height comes from `P.layer_top(LID_T)`. `slicer.py` checks it against the real
-  G-code.
+- Two plates have a colour change. Lid: `P.layer_top(LID_T)` = 5.20 mm, to orange.
+  Vampire: `P.layer_top(CAPE_T)` = 1.80 mm, to white. The cape and the collar are exactly
+  `CAPE_T` thick and print black. `slicer.py` reads the planned heights from each 3MF and
+  checks the real G-code against `export.PLANNED_M600`, not against the 3MF it is checking.
 
 ## Checks after any geometry change
 
@@ -138,6 +155,16 @@ uv run python -m vampire_coffin.render     # PNG previews -> out/render (add --g
   touch other faces). Always use `vampire._ellipsoid()`: it turns the poles along x and
   sinks the centre by `SINK`.
 - `split()` can return a list. `render` accepts lists.
+- **Always pass `dir=UP` when you extrude a sketch in `vampire.py`.** A polygon drawn
+  clockwise has a downward normal, so it extrudes downwards. A clockwise nose triangle once
+  cut straight through the skull, and the fangs extruded into nothing.
+- Make ellipsoids with `shapes.ellipsoid()` (poles on the x axis) and place the poles
+  outside the final part.
+- Never cut with a sphere or a cone where its pole or apex ends up on a visible surface
+  (dimples, eye sockets). The STL gets degenerate triangles and non-manifold edges there.
+  Keep poles outside the part (see the eye sockets), or leave the detail out.
+- Cut overlapping 2D shapes one at a time. One cutting tool made of overlapping pieces left
+  doubled edges on the floor of the nose cut.
 - Text must use the bundled font (`src/vampire_coffin/fonts/PirataOne-Regular.ttf`). If
   the file is missing, `Text` silently uses a system font, so `lid.py` raises an error at
   import instead.

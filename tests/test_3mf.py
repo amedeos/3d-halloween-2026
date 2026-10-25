@@ -4,7 +4,14 @@ from itertools import combinations
 
 import pytest
 
-from vampire_coffin.export import BED, M600_Z, plates, write_3mf
+from vampire_coffin.export import (
+    BED,
+    M600_Z,
+    PLANNED_M600,
+    VAMPIRE_M600_Z,
+    plates,
+    write_3mf,
+)
 from vampire_coffin.slicer import CONFIG_ENTRY, M600_ENTRY, config_from_gcode, make_project
 
 PLATES = plates()
@@ -22,16 +29,20 @@ def test_plate_fits_the_bed_without_overlaps(name):
         assert apart
 
 
-def test_colour_change_only_where_the_lid_is():
+def test_colour_changes_only_where_planned():
     # the lid's M600 would turn the box walls orange, so they never share a plate;
     # the coupon has no colour change (no pause during a quick fit test)
-    for objects, m600 in PLATES.values():
-        names = {n for n, _, _ in objects}
-        assert not ({"box", "lid"} <= names)
-        assert ("lid" in names) == (m600 is not None)
+    assert PLANNED_M600 == {"plate_2_lid_black_then_orange": (M600_Z, "orange"),
+                            "plate_3_vampire_black_then_white": (VAMPIRE_M600_Z, "white")}
+    for name, (objects, change) in PLATES.items():
+        names = sorted(n for n, _, _ in objects)
+        assert not ({"box", "lid"} <= set(names))
+        assert len({"lid", "vampire"} & set(names)) <= 1  # one colour change per plate
+        assert change == PLANNED_M600.get(name)
 
 
-@pytest.mark.parametrize("name", ["plate_2_lid_black_then_orange", "plate_3_white_vampire"])
+@pytest.mark.parametrize("name", ["plate_1_black_box_and_nails", "plate_2_lid_black_then_orange",
+                                  "plate_3_vampire_black_then_white"])
 def test_3mf_content(tmp_path, name):
     objects, m600 = PLATES[name]
     path = tmp_path / f"{name}.3mf"
@@ -44,7 +55,7 @@ def test_3mf_content(tmp_path, name):
         assert M600_ENTRY not in z.namelist()
     else:
         xml = z.read(M600_ENTRY).decode()
-        assert f'print_z="{M600_Z:.2f}"' in xml and 'gcode="M600"' in xml
+        assert f'print_z="{m600[0]:.2f}"' in xml and 'gcode="M600"' in xml
 
 
 def test_project_gets_the_config_from_the_gcode(tmp_path):
@@ -54,8 +65,18 @@ def test_project_gets_the_config_from_the_gcode(tmp_path):
     config = config_from_gcode(gcode)
     assert "; binary_gcode = 1" in config and "; layer_height = 0.2" in config
     plate = tmp_path / "plate.3mf"
-    objects, m600 = PLATES["plate_3_white_vampire"]
+    objects, m600 = PLATES["plate_3_vampire_black_then_white"]
     write_3mf(plate, objects, m600)
     project = tmp_path / "projects" / "plate.3mf"
     make_project(plate, config, project)
     assert zipfile.ZipFile(project).read(CONFIG_ENTRY).decode() == config
+
+
+def test_assembly_preview_is_written(tmp_path):
+    from vampire_coffin.export import assembly_preview
+
+    items = assembly_preview()
+    path = tmp_path / "assembly_preview.3mf"
+    write_3mf(path, items)
+    model = zipfile.ZipFile(path).read("3D/3dmodel.model").decode()
+    assert re.findall(r'<object [^>]*name="([^"]*)"', model) == [n for n, _, _ in items]

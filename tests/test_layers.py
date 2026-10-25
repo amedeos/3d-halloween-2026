@@ -5,7 +5,7 @@ from build123d import GeomType
 
 from vampire_coffin import params as P
 from vampire_coffin.coupon import coupon_parts
-from vampire_coffin.export import M600_Z, printable_parts
+from vampire_coffin.export import M600_Z, VAMPIRE_M600_Z, printable_parts
 from vampire_coffin.lid import FONT, _lettering, relief_sketch
 
 PARTS = printable_parts() | coupon_parts()
@@ -43,6 +43,15 @@ def test_colour_change_layer():
     assert on_grid(P.LID_T) and on_grid(P.RELIEF_H)
     assert M600_Z == pytest.approx(P.LID_T + P.LAYER)
     assert P.layer_top(P.LID_T) == pytest.approx(5.2)
+    # vampire: the black cape and collar are exactly CAPE_T thick, then white
+    assert on_grid(P.CAPE_T) and VAMPIRE_M600_Z == pytest.approx(P.CAPE_T + P.LAYER)
+
+
+def test_vampire_volume_is_sane():
+    # a boolean that fails silently can drop half of a part without any error
+    from vampire_coffin.vampire import make_vampire
+
+    assert 8.0 < make_vampire().volume / 1000 < 13.5
 
 
 def test_solid_shells():

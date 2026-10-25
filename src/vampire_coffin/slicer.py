@@ -28,7 +28,7 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-from .export import M600_Z
+from .export import PLANNED_M600
 
 PROFILES = {
     "--printer-profile": "Original Prusa MK4 Input Shaper 0.4 nozzle",
@@ -96,6 +96,15 @@ def config_from_gcode(gcode: Path) -> str:
     return "\n".join([header, *body]) + "\n"
 
 
+def stored_colour_changes(plate: Path) -> list[float]:
+    """The M600 heights written into a 3MF plate (empty list if there are none)."""
+    with zipfile.ZipFile(plate) as z:
+        if M600_ENTRY not in z.namelist():
+            return []
+        xml = z.read(M600_ENTRY).decode()
+    return [float(v) for v in re.findall(r'print_z="([\d.]+)"', xml)]
+
+
 def make_project(plate: Path, config: str, out: Path) -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(plate, out)
@@ -115,13 +124,17 @@ def main(folder: Path = Path("out/3mf")) -> int:
             gcode = Path(tmp) / f"{plate.stem}.gcode"
             slice_plate(cmd, plate, gcode)
             info = summary(gcode)
-            needs_m600 = M600_ENTRY in zipfile.ZipFile(plate).namelist()
+            # expected heights come from the design (PLANNED_M600), not from the file
+            planned = PLANNED_M600.get(plate.stem)
+            expected = [round(planned[0], 2)] if planned else []
+            stored = stored_colour_changes(plate)
             issues = []
             probe = Path(tmp) / f"{plate.stem}.supports.gcode"
             slice_plate(cmd, plate, probe, extra=tuple(AUTO_SUPPORT))
             if summary(probe)["support_lines"]:
                 issues.append(f"needs support ({summary(probe)['support_lines']} extrusions)")
-            expected = [M600_Z] if needs_m600 else []
+            if stored != expected:
+                issues.append(f"3MF stores M600 at {stored}, the design says {expected}")
             if info["m600"] != len(expected) or info["m600_z"] != expected:
                 issues.append(f"expected M600 at {expected}, found {info['m600']} "
                               f"at {info['m600_z']}")

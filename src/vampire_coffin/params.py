@@ -106,7 +106,10 @@ S_MAX = 82.0  # lid travel from closed to fully open (hard stop)
 
 # --- figure ---------------------------------------------------------------------------
 SKULL_TOP = 76.0  # distance from the hip axis to the top of the skull
-FIG_HW = 12.8  # max half width of the torso (ribs, collar)
+CAPE_T = 1.6  # cape and collar plates (8 layers): printed black, then M600 to white
+FIG_HW = 12.8  # half width of the ribcage
+COLLAR_HW = 17.4  # half width at the collar tips: the widest part of the figure
+CAPE_HW = 15.0  # half width of the cape at the hem
 
 # --- coffin handles (6 bar handles on the side walls) --------------------------------
 HANDLE_Z = snap_up(BOX_H * 0.55)  # handle centre height

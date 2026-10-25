@@ -21,14 +21,13 @@ from build123d import (
     Vector,
     chamfer,
     extrude,
-    fillet,
     loft,
     make_face,
 )
 
 from . import params as P
 from .outline import max_miter, outline_face, side_segments
-from .shapes import box_between
+from .shapes import box_between, ellipsoid
 
 
 def rail_points(grow: float = 0.0, z_floor: float = P.FLOOR,
@@ -118,9 +117,30 @@ def _handles() -> Part:
 
 
 def _pillow() -> Part:
-    """Satin pillow under the skull; its top is the rest position of the vampire's back."""
-    pillow = box_between(P.WALL, P.WALL + 25.0, -12.0, 12.0, P.FLOOR - 0.5, P.FLOOR + P.PILLOW_H)
-    return fillet(pillow.edges().group_by(Axis.Z)[-1], 1.2)
+    """Satin pillow under the skull.
+
+    The top has a flat plateau at BACK_Z where the back of the skull rests (the rest
+    position of the vampire), and rounds off towards the edges. (Button dimples were tried:
+    any small sphere or cone cut leaves a degenerate point in the STL.)
+    """
+    cx = P.WALL + 12.5
+    # dome centred a little below the floor: its poles stay outside the final part
+    dome = ellipsoid(cx, 0, -0.4, 16.0, 14.0, 5.6)
+    return dome & box_between(P.WALL, P.WALL + 25.0, -12.0, 12.0, P.FLOOR - 0.5, P.BACK_Z)
+
+
+def _quilting() -> Part:
+    """Diamond quilting on the floor of the head half, seen when the vampire sits up."""
+    x0, x1 = 28.0, P.PIVOT_X - 10.0  # between the pillow and the hip bearing
+    ridge_w, height, pitch, angle = P.lines(2), 2 * P.LAYER, 7.0, 35.0
+    ridges = Sketch()  # all ridges in one sketch: one extrude and one boolean
+    for s in (1, -1):
+        for k in range(-8, 9):
+            ridges += Pos((x0 + x1) / 2, k * pitch / cos(radians(angle))) * Rot(
+                0, 0, s * angle) * Rectangle(90.0, ridge_w)
+    area = Sketch() + Pos((x0 + x1) / 2, 0) * Rectangle(x1 - x0, 80) & outline_face(
+        -P.WALL - 0.6)
+    return Pos(0, 0, P.FLOOR) * extrude(ridges & area, height, dir=(0, 0, 1))
 
 
 def _bearing() -> Part:
@@ -166,7 +186,8 @@ def _stash_wall() -> Part:
 
 @cache
 def make_box() -> Part:
-    box = _shell() + _handles() + _pillow() + _bearing() + _rail() + _stash_wall()
+    box = (_shell() + _handles() + _pillow() + _quilting() + _bearing() + _rail()
+           + _stash_wall())
     box.label = "box"
     return box
 

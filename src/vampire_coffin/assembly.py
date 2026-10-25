@@ -7,9 +7,9 @@ from .box import make_box
 from .kinematics import theta
 from .lid import lid_base, lid_relief, make_lid
 from .nail import make_nail
-from .vampire import make_vampire, placed
+from .vampire import coloured, make_vampire, placed
 
-COLOR = {"box": "black", "lid": "black", "nail": (0.3, 0.3, 0.32), "vampire": "white"}
+COLOR = {"box": "black", "lid": "black", "nail": "grey", "vampire": "white"}
 
 
 def parts() -> dict[str, Part]:
@@ -38,18 +38,24 @@ def parts_at(s: float | None) -> dict[str, Part]:
     }
 
 
-def scene(s: float | None, lid: bool = True):
-    """Coloured parts for rendering; the lid relief shows in orange (the M600 colour)."""
-    out = []
-    for name, shape in parts_at(s).items():
-        if name == "lid":
-            if lid:
-                moved = Pos(P.S_MAX if s is None else s, 0, 0)
-                out.append((moved * lid_base(), COLOR["lid"]))
-                out.append((moved * lid_relief(), "orange"))
-            continue
-        out.append((shape, COLOR[name.split("_")[0]]))
+def scene_parts(s: float | None, lid: bool = True) -> list[tuple[Part, str, str]]:
+    """(part, colour, name) of everything but the vampire, for the lid slid by s."""
+    s = P.S_MAX if s is None else s
+    moved = Pos(s, 0, 0)
+    p = parts()
+    out = [(p["box"], "black", "box")]
+    if lid:
+        out += [(moved * lid_base(), "black", "lid"),
+                (moved * lid_relief(), "orange", "lid relief")]
+    out += [(moved * p["nail_l"], COLOR["nail"], "nail"),
+            (moved * p["nail_r"], COLOR["nail"], "nail")]
     return out
+
+
+def scene(s: float | None, lid: bool = True) -> list[tuple[Part, str]]:
+    """Coloured parts for rendering: lid relief orange, vampire with his black cape."""
+    s = P.S_MAX if s is None else s
+    return [(part, colour) for part, colour, _ in scene_parts(s, lid)] + coloured(theta(s))
 
 
 PAIRS = [
