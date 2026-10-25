@@ -102,7 +102,7 @@ def plates() -> dict[str, tuple[list[tuple[str, Part, str]], float | None]]:
         "plate_3_white_vampire": ([("vampire", _row([pp["vampire_white"]])[0], "white")], None),
         "coupon_all_pieces": (
             [(n, p, coupon_colour.get(n, "black"))
-             for n, p in zip(coupon_names, _row([cp[n] for n in coupon_names]))], M600_Z),
+             for n, p in zip(coupon_names, _row([cp[n] for n in coupon_names]))], None),
     }
 
 

@@ -23,12 +23,12 @@ def test_plate_fits_the_bed_without_overlaps(name):
 
 
 def test_colour_change_only_where_the_lid_is():
-    # the lid's M600 would turn the box walls orange, so they never share a plate
+    # the lid's M600 would turn the box walls orange, so they never share a plate;
+    # the coupon has no colour change (no pause during a quick fit test)
     for objects, m600 in PLATES.values():
         names = {n for n, _, _ in objects}
         assert not ({"box", "lid"} <= names)
-        has_lid = bool(names & {"lid", "coupon_lid_slide_M600"})
-        assert has_lid == (m600 is not None)
+        assert ("lid" in names) == (m600 is not None)
 
 
 @pytest.mark.parametrize("name", ["plate_2_lid_black_then_orange", "plate_3_white_vampire"])

@@ -72,7 +72,7 @@ There are three kinds of files. Use whichever you like:
 | `plate_1_black_box_and_nails` | box + 2 nails | black | 3 h 03 min | 68 g |
 | `plate_2_lid_black_then_orange` | lid | black, then orange | 1 h 01 min | 28 g |
 | `plate_3_white_vampire` | vampire | white | 39 min | 9 g |
-| `coupon_all_pieces` | tolerance coupon | any (the lid piece gets the M600) | 48 min | 13 g |
+| `coupon_all_pieces` | tolerance coupon | any, no colour change | 48 min | 13 g |
 
 \* PrusaSlicer 2.9.6 estimates (Prusament PETG, 0.20mm STRUCTURAL). The whole coffin takes
 about 4 h 45 min.
@@ -107,9 +107,9 @@ your PATH, set `PRUSA_SLICER`, for example
 
 ### Print the tolerance coupon first (about 50 min)
 
-Print `coupon_all_pieces.3mf` (or the `coupon_*.stl` files). The colour change at
-Z = 5.20 mm is already in the 3MF: you test it on the lid piece, and the tall pieces just
-change colour at the top.
+Print `coupon_all_pieces.3mf` (or the `coupon_*.stl` files) in one colour. It has no
+colour change, so the print never pauses. The lid's colour change is tested on the real
+lid.
 
 The `coupon_*.stl` files are pieces cut from the real parts. If they fit together, the
 coffin will fit together too.
@@ -122,7 +122,7 @@ coffin will fit together too.
    - Push a lever with your finger. The stubs must stay in the slot.
    - Too tight or too loose? Change `SNAP` or `CLR_STUB`. Keep `SNAP` above 0, or the
      vampire falls out when you tip the coffin (a test checks this).
-2. **Rail** (`coupon_rail` + `coupon_lid_slide_M600`)
+2. **Rail** (`coupon_rail` + `coupon_lid_slide`)
    - Slide the lid piece onto the rail from the wide, open end. This is how the real lid
      moves.
    - It should slide smoothly, without wobbling, and it should not lift off.

@@ -46,8 +46,7 @@ def lid_nail_piece() -> Part:
 def lid_slide_piece() -> Part:
     """Middle of the lid: lips, the flared entry and the open part of the slot.
 
-    Slide it onto the rail from the wide (open) end, as the real lid does. It also has
-    a piece of the cross and the border, so it tests the M600 colour change.
+    Slide it onto the rail from the wide (open) end, as the real lid does.
     """
     region = box_between(55, 85, -19, 19, 0, 60)
     return Pos(-55, 0, -P.BOX_H) * (make_lid() & region)
@@ -60,7 +59,7 @@ def _coupon_parts() -> dict[str, Part]:
         "coupon_pelvis": pelvis_piece(),
         "coupon_rail": rail_piece(),
         "coupon_lid_nails": lid_nail_piece(),
-        "coupon_lid_slide_M600": lid_slide_piece(),
+        "coupon_lid_slide": lid_slide_piece(),
         "coupon_nail": nail_pose(make_nail()),
     }
 
