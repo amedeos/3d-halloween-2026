@@ -6,11 +6,11 @@ Tune CLR_* / SNAP in params.py from what you see.
 
 from functools import cache
 
-from build123d import Part, Pos
+from build123d import Cylinder, Part, Pos
 
 from . import params as P
 from .box import make_box
-from .lid import make_lid
+from .lid import make_lid, nail_hole_xy
 from .nail import make_nail
 from .nail import print_pose as nail_pose
 from .shapes import box_between
@@ -50,6 +50,30 @@ def lid_slide_piece() -> Part:
     """
     region = box_between(55, 85, -19, 19, 0, 60)
     return Pos(-55, 0, -P.BOX_H) * (make_lid() & region)
+
+
+def nail_gauge_piece() -> Part:
+    """A 5 mm strip of lid with four nail holes, NAIL_GAUGE mm wider per side than the
+    nail's plug. Holes are marked with 1 to 4 dots. Push a nail printed with zero
+    clearance (`make_nail(0.0)`) into each hole and keep the clearance that holds best."""
+    pitch, margin, half_w = 12.0, 8.0, 8.0
+    x0, x1, y0, y1 = nail_hole_xy(clr=0.0)  # nominal hole = plug of a zero-clearance nail
+    hw, hd = (x1 - x0) / 2, (y1 - y0) / 2
+    length = 2 * margin + pitch * (len(P.NAIL_GAUGE) - 1)
+    strip = box_between(0, length, -half_w, half_w, 0, P.LID_T)
+    for k, clr in enumerate(P.NAIL_GAUGE):
+        cx = margin + k * pitch
+        strip -= box_between(cx - hw - clr, cx + hw + clr, -hd - clr, hd + clr, -1, P.LID_T + 1)
+        for d in range(k + 1):  # k + 1 dots next to the hole
+            dx = (d - k / 2) * 1.8
+            strip += Pos(cx + dx, half_w - 2.2, P.LID_T + 0.3) * Cylinder(0.6, 0.6)
+    return strip
+
+
+def nail_gauge_parts() -> dict[str, Part]:
+    """The nail gauge and a zero-clearance nail to test it with."""
+    return {"coupon_nail_gauge": nail_gauge_piece(),
+            "coupon_nail_gauge_nail": nail_pose(make_nail(0.0))}
 
 
 @cache

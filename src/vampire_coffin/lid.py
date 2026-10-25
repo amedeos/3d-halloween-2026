@@ -34,11 +34,15 @@ SLOT_U1 = P.BOX_L - P.WALL  # foot end of the slot = closed position stop
 SLOT_TOP = P.RAIL_HEAD_Z1 + P.CLR_SLOT_TOP  # slot ceiling, on a layer boundary
 
 
-def nail_hole_xy() -> tuple[float, float, float, float]:
-    """(x0, x1, y0, y1) of the +y nail hole; the pin must pass through it."""
+def nail_hole_xy(clr: float = P.CLR_NAIL) -> tuple[float, float, float, float]:
+    """(x0, x1, y0, y1) of the +y nail hole; the pin must pass through it.
+
+    The nail's plug is this hole shrunk by `clr` on each side; the outer side of the hole
+    moves out instead, because the outer face of the nail lies flat on the print bed.
+    """
     hx = P.PIN_D / 2 + P.CLR_NAIL_HOLE
     return (PIN_U - hx, PIN_U + hx, P.PIN_Y0 - P.CLR_NAIL_HOLE,
-            P.NAIL_Y0 + P.NAIL_SHANK + P.CLR_NAIL)
+            P.NAIL_Y0 + P.NAIL_SHANK + clr)
 
 
 def _body() -> Part:

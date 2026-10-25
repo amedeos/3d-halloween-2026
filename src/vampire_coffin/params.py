@@ -8,7 +8,7 @@ Assembly frame: x runs from the head end (x=0) to the foot end (x=BOX_L), y is l
 (symmetric), z is up with the box resting on z=0. The lid slides towards +x by `s`.
 """
 
-from math import ceil, pi
+from math import ceil, floor, pi
 
 # --- printer / process: Prusa MK4, 0.4 mm nozzle, PrusaSlicer "0.20mm STRUCTURAL" -----
 NOZZLE = 0.4
@@ -32,6 +32,13 @@ def layer_top(z: float) -> float:
     return round(FIRST_LAYER + k * LAYER, 6)
 
 
+def snap_down(z: float) -> float:
+    """Largest layer boundary at or below z (boundaries: 0, FIRST_LAYER, + n * LAYER)."""
+    if z < FIRST_LAYER - 1e-9:
+        return 0.0
+    return round(FIRST_LAYER + floor((z - FIRST_LAYER) / LAYER + 1e-9) * LAYER, 6)
+
+
 def snap_up(z: float) -> float:
     """Smallest layer boundary at or above z (boundaries: 0, FIRST_LAYER, + n * LAYER)."""
     if z <= FIRST_LAYER:
@@ -43,7 +50,9 @@ def snap_up(z: float) -> float:
 CLR_SLIDE = 0.30  # dovetail rail <-> lid slot, per side
 CLR_STUB = 0.20  # hip stub <-> U bearing, radial
 SNAP = 0.15  # bearing mouth is this much narrower than the stub; keep > 0 (retention)
-CLR_NAIL = 0.0  # nail plug <-> lid hole, per side (holes print a bit small: press fit)
+CLR_NAIL = 0.10  # nail plug <-> lid hole, per side (0.0 was too tight in PETG; see the
+#                  nail gauge coupon to find the best value for your printer)
+NAIL_GAUGE = (0.05, 0.10, 0.15, 0.20)  # clearances of the four holes of the nail gauge
 CLR_NAIL_HOLE = 0.2  # lid hole around the nail pin, so the pin passes through it
 
 # --- coffin outline (outer, top view) ------------------------------------------------

@@ -1,10 +1,10 @@
 import pytest
 
-from vampire_coffin.coupon import coupon_parts
+from vampire_coffin.coupon import coupon_parts, nail_gauge_parts
 from vampire_coffin.export import check, mesh_problems, printable_parts
 
 PRINTABLE = printable_parts()
-PARTS = PRINTABLE | coupon_parts()
+PARTS = PRINTABLE | coupon_parts() | nail_gauge_parts()
 
 
 @pytest.mark.parametrize("name", list(PARTS))

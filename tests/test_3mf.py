@@ -39,7 +39,7 @@ def test_plate_is_centred_on_the_bed(name):
     assert (x0 + x1) / 2 == pytest.approx(BED[0] / 2, abs=0.5)
     assert (y0 + y1) / 2 == pytest.approx(BED[1] / 2, abs=0.5)
     main = boxes[0]  # box, lid, vampire: right in the middle
-    if len(objects) <= 3:
+    if objects[0][0] in ("box", "lid", "vampire"):
         assert (main.min.X + main.max.X) / 2 == pytest.approx(BED[0] / 2, abs=0.01)
         assert (main.min.Y + main.max.Y) / 2 == pytest.approx(BED[1] / 2, abs=0.01)
 

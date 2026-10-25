@@ -20,7 +20,7 @@ from build123d import Color, Mesher, Part, Pos, export_stl
 from . import params as P
 from .assembly import scene_parts
 from .box import make_box
-from .coupon import coupon_parts
+from .coupon import coupon_parts, nail_gauge_parts
 from .kinematics import theta
 from .lid import make_lid
 from .nail import make_nail
@@ -107,7 +107,7 @@ def plates() -> dict[str, tuple[list[tuple[str, Part, str]], tuple[float, str] |
 
     A colour change is (print_z, new colour): the M600 comes before the layer at print_z.
     """
-    pp, cp = printable_parts(), coupon_parts()
+    pp, cp, gauge = printable_parts(), coupon_parts(), nail_gauge_parts()
     # like PrusaSlicer's arrange: the box in the middle of the bed, one nail above it and
     # one below it
     box = _centred(pp["box_black"])
@@ -127,6 +127,8 @@ def plates() -> dict[str, tuple[list[tuple[str, Part, str]], tuple[float, str] |
         "plate_3_vampire_black_then_white": (
             [("vampire", _centred(pp["vampire_black_M600_white"]), "black")],
             PLANNED_M600["plate_3_vampire_black_then_white"]),
+        "coupon_nail_gauge": (
+            [(n, p, "black") for n, p in zip(gauge, _row(list(gauge.values())))], None),
         "coupon_all_pieces": (
             [(n, p, coupon_colour.get(n, "black"))
              for n, p in zip(coupon_names, _row([cp[n] for n in coupon_names]))], None),
@@ -173,7 +175,7 @@ def export_all(out: Path, coupon: bool = True) -> dict[str, list[str]]:
     stl_dir, mf_dir = out / "stl", out / "3mf"
     stl_dir.mkdir(parents=True, exist_ok=True)
     mf_dir.mkdir(parents=True, exist_ok=True)
-    parts = printable_parts() | (coupon_parts() if coupon else {})
+    parts = printable_parts() | (coupon_parts() | nail_gauge_parts() if coupon else {})
     report = {}
     for name, part in parts.items():
         problems = check(part) + write_stl(part, stl_dir / f"{name}.stl")

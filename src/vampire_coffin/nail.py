@@ -17,14 +17,19 @@ Y_OUT = P.NAIL_Y0 + P.NAIL_SHANK  # outer face, flat on the bed when printing
 
 
 @cache
-def make_nail() -> Part:
+def make_nail(clr: float = P.CLR_NAIL) -> Part:
+    """The nail for a lid hole with `clr` mm of clearance on each side of the plug."""
     hx, hy, hz = P.NAIL_HEAD
     head = box_between(PIN_U - hx / 2, PIN_U + hx / 2, Y_OUT - hy, Y_OUT, LID_TOP, LID_TOP + hz)
     head = chamfer(head.edges().group_by(Axis.Z)[-1], 0.5)
 
     x0, x1, y0, _ = nail_hole_xy()
-    c = P.CLR_NAIL
-    plug = box_between(x0 + c, x1 - c, y0 + c, Y_OUT, P.BOX_H, LID_TOP + 0.01)
+    # Printed lying down, the inner face of the plug is a flat top face: keep it on a layer
+    # boundary. So across y the clearance is 0 or one layer, across x it is exactly clr.
+    y_in = Y_OUT - P.snap_down(Y_OUT - (y0 + clr))
+    plug = box_between(x0 + clr, x1 - clr, y_in, Y_OUT, P.BOX_H, LID_TOP + 0.01)
+    # lead-in: a small chamfer around the bottom of the plug centres it in the hole
+    plug = chamfer(plug.edges().group_by(Axis.Z)[0], 0.4)
 
     sx = P.PIN_D / 2 + P.CLR_NAIL_HOLE / 2  # a bit wider than the pin, narrower than the hole
     z_low = PIN_Z - P.PIN_D / 2 - 0.6

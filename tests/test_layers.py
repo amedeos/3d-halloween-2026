@@ -4,11 +4,11 @@ import pytest
 from build123d import GeomType
 
 from vampire_coffin import params as P
-from vampire_coffin.coupon import coupon_parts
+from vampire_coffin.coupon import coupon_parts, nail_gauge_parts
 from vampire_coffin.export import M600_Z, VAMPIRE_M600_Z, printable_parts
 from vampire_coffin.lid import FONT, _lettering, relief_sketch
 
-PARTS = printable_parts() | coupon_parts()
+PARTS = printable_parts() | coupon_parts() | nail_gauge_parts()
 
 
 def on_grid(z: float) -> bool:
