@@ -76,6 +76,7 @@ There are three kinds of files. Use whichever you like:
 | `plate_2_lid_black_then_orange` | lid | black, then orange at 5.20 mm | 1 h 01 min | 28 g |
 | `plate_3_vampire_black_then_white` | vampire | black, then white at 1.80 mm | 40 min | 9 g |
 | `coupon_all_pieces` | tolerance coupon | any, no colour change | 47 min | 12 g |
+| `coupon_nail_gauge` | nail gauge (optional) | any | 14 min | 3 g |
 
 \* PrusaSlicer 2.9.6 estimates (Prusament PETG, 0.20mm STRUCTURAL). The whole coffin takes
 about 4 h 50 min.
@@ -142,7 +143,10 @@ coffin will fit together too.
 3. **Nails** (`coupon_nail` + `coupon_lid_nails`)
    - Press the nail into the hole from the top. It should hold firmly, with the pin
      straight.
-   - Change `CLR_NAIL` if needed. A drop of glue is also fine.
+   - Too tight or too loose? Print `coupon_nail_gauge` (14 min): a strip with four holes,
+     0.05, 0.10, 0.15 and 0.20 mm wider per side, marked with 1 to 4 dots. Push a nail into
+     each hole and set `CLR_NAIL` to the one that holds best. On our MK4 with Prusament
+     PETG it was 0.10 mm (2 dots), the default. A drop of glue is also fine.
 
 ## Assembly
 

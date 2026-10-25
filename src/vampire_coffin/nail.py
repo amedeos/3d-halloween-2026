@@ -10,7 +10,7 @@ from build123d import Axis, Cylinder, Part, Pos, Rot, chamfer
 
 from . import params as P
 from .kinematics import PIN_U, PIN_Z
-from .lid import LID_TOP, nail_hole_xy
+from .lid import LID_TOP, nail_hole_xy, nail_y_gaps
 from .shapes import box_between
 
 Y_OUT = P.NAIL_Y0 + P.NAIL_SHANK  # outer face, flat on the bed when printing
@@ -23,10 +23,9 @@ def make_nail(clr: float = P.CLR_NAIL) -> Part:
     head = box_between(PIN_U - hx / 2, PIN_U + hx / 2, Y_OUT - hy, Y_OUT, LID_TOP, LID_TOP + hz)
     head = chamfer(head.edges().group_by(Axis.Z)[-1], 0.5)
 
-    x0, x1, y0, _ = nail_hole_xy()
-    # Printed lying down, the inner face of the plug is a flat top face: keep it on a layer
-    # boundary. So across y the clearance is 0 or one layer, across x it is exactly clr.
-    y_in = Y_OUT - P.snap_down(Y_OUT - (y0 + clr))
+    x0, x1, y0, _ = nail_hole_xy(clr)
+    # across y the inner gap is a whole number of layers (see nail_y_gaps)
+    y_in = y0 + nail_y_gaps(clr)[0]
     plug = box_between(x0 + clr, x1 - clr, y_in, Y_OUT, P.BOX_H, LID_TOP + 0.01)
     # lead-in: a small chamfer around the bottom of the plug centres it in the hole
     plug = chamfer(plug.edges().group_by(Axis.Z)[0], 0.4)

@@ -50,8 +50,8 @@ def snap_up(z: float) -> float:
 CLR_SLIDE = 0.30  # dovetail rail <-> lid slot, per side
 CLR_STUB = 0.20  # hip stub <-> U bearing, radial
 SNAP = 0.15  # bearing mouth is this much narrower than the stub; keep > 0 (retention)
-CLR_NAIL = 0.10  # nail plug <-> lid hole, per side (0.0 was too tight in PETG; see the
-#                  nail gauge coupon to find the best value for your printer)
+CLR_NAIL = 0.10  # nail plug <-> lid hole, per side. The nail gauge picked 0.10 (2 dots)
+#                  in Prusament PETG on an MK4; 0.0 was too tight.
 NAIL_GAUGE = (0.05, 0.10, 0.15, 0.20)  # clearances of the four holes of the nail gauge
 CLR_NAIL_HOLE = 0.2  # lid hole around the nail pin, so the pin passes through it
 

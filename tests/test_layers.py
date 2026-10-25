@@ -138,3 +138,13 @@ def test_lid_lips_ramp_down_at_the_entry():
         P.LID_LIPS_U1 - 0.1)
     assert full > half > entry
     assert entry < P.BOX_H + 0.3
+
+
+@pytest.mark.parametrize("clr", [0.0, 0.05, 0.10, 0.15, 0.20])
+def test_nail_gaps_follow_the_gauge(clr):
+    """The real nail has the same total clearance as the gauge hole it was chosen from."""
+    from vampire_coffin.lid import nail_y_gaps
+
+    inner, outer = nail_y_gaps(clr)
+    assert inner + outer == pytest.approx(2 * clr)
+    assert on_grid(inner) and outer >= 0

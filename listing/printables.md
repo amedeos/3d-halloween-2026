@@ -92,6 +92,7 @@ The pictures with a cut-away side show the nail pushing the lever.
 | `plate_2_lid_black_then_orange` | lid | black, then orange at 5.20 mm | 1 h 01 min | 28 g |
 | `plate_3_vampire_black_then_white` | vampire | black, then white at 1.80 mm | 40 min | 9 g |
 | `coupon_all_pieces` | tolerance coupon (optional) | any, one colour | 47 min | 12 g |
+| `coupon_nail_gauge` | nail gauge (optional) | any, one colour | 14 min | 3 g |
 
 The whole coffin takes about 4 h 50 min and 105 g of filament.
 
@@ -124,7 +125,10 @@ parts, so if they fit, the coffin fits.
    Lay it down: it should stay in, turn freely and fall back on its own.
 2. **Rail.** Slide the lid piece onto the rail from the wide end. It should slide smoothly
    and not lift off.
-3. **Nail.** Press the nail into its hole. It should hold firmly.
+3. **Nail.** Press the nail into its hole. It should hold firmly. If it is too tight or
+   too loose, print the nail gauge: four holes from 0.05 to 0.20 mm per side, marked with
+   1 to 4 dots. The one that holds best gives you the clearance (0.10 mm, 2 dots, on our
+   MK4 with Prusament PETG).
 
 If a fit is too tight or too loose, the source code lets you change the clearances in one
 file (`params.py`).

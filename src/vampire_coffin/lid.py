@@ -34,15 +34,26 @@ SLOT_U1 = P.BOX_L - P.WALL  # foot end of the slot = closed position stop
 SLOT_TOP = P.RAIL_HEAD_Z1 + P.CLR_SLOT_TOP  # slot ceiling, on a layer boundary
 
 
+def nail_y_gaps(clr: float = P.CLR_NAIL) -> tuple[float, float]:
+    """(inner, outer) clearance of the nail plug across y, adding up to 2 * clr.
+
+    Printed lying down, the inner face of the plug is a flat top face, so the inner gap
+    must be a whole number of layers. The outer gap is a wall of the lid hole (printed
+    upright, so exact) and makes up the rest. Across x the gap is simply clr per side.
+    """
+    inner = P.snap_down(2 * clr)
+    return inner, round(2 * clr - inner, 6)
+
+
 def nail_hole_xy(clr: float = P.CLR_NAIL) -> tuple[float, float, float, float]:
     """(x0, x1, y0, y1) of the +y nail hole; the pin must pass through it.
 
-    The nail's plug is this hole shrunk by `clr` on each side; the outer side of the hole
-    moves out instead, because the outer face of the nail lies flat on the print bed.
+    The nail's plug is this hole shrunk by clr on each side across x and by
+    `nail_y_gaps(clr)` across y.
     """
     hx = P.PIN_D / 2 + P.CLR_NAIL_HOLE
     return (PIN_U - hx, PIN_U + hx, P.PIN_Y0 - P.CLR_NAIL_HOLE,
-            P.NAIL_Y0 + P.NAIL_SHANK + clr)
+            P.NAIL_Y0 + P.NAIL_SHANK + nail_y_gaps(clr)[1])
 
 
 def _body() -> Part:

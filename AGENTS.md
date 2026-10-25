@@ -163,6 +163,9 @@ uv run python -m vampire_coffin.render     # PNG previews -> out/render (add --g
 - Never cut with a sphere or a cone where its pole or apex ends up on a visible surface
   (dimples, eye sockets). The STL gets degenerate triangles and non-manifold edges there.
   Keep poles outside the part (see the eye sockets), or leave the detail out.
+- The nail prints lying down, so the inner face of its plug is a flat top face: across
+  that direction the clearance must be whole layers. `lid.nail_y_gaps()` puts the rest on
+  the lid side, so the total always matches the nail gauge hole.
 - Cut overlapping 2D shapes one at a time. One cutting tool made of overlapping pieces left
   doubled edges on the floor of the nose cut.
 - Text must use the bundled font (`src/vampire_coffin/fonts/PirataOne-Regular.ttf`). If
