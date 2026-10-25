@@ -71,6 +71,8 @@ def test_3mf_content(tmp_path, name):
     else:
         xml = z.read(M600_ENTRY).decode()
         assert f'print_z="{m600[0]:.2f}"' in xml and 'gcode="M600"' in xml
+        # the PrusaSlicer 2.9 GUI ignores colour changes without a bed index
+        assert xml.count('bed_idx="0"') == 2
 
 
 def test_project_gets_the_config_from_the_gcode(tmp_path):

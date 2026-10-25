@@ -144,9 +144,12 @@ def _named(part: Part, name: str, colour: str) -> Part:
 
 def m600_metadata(print_z: float, colour: str) -> str:
     """PrusaSlicer's colour-change list, as stored inside its 3MF files."""
+    # bed_idx: PrusaSlicer 2.9 keeps colour changes per bed (multiple beds); older versions
+    # ignore the attribute
     return ('<?xml version="1.0" encoding="utf-8"?>\n<custom_gcodes_per_print_z>\n'
-            f'<code print_z="{print_z:.2f}" type="0" extruder="1" color="{COLOURS[colour]}" '
-            'extra="" gcode="M600"/>\n<mode value="SingleExtruder"/>\n'
+            f'<code bed_idx="0" print_z="{print_z:.2f}" type="0" extruder="1" '
+            f'color="{COLOURS[colour]}" extra="" gcode="M600"/>\n'
+            '<mode bed_idx="0" value="SingleExtruder"/>\n'
             '</custom_gcodes_per_print_z>\n')
 
 

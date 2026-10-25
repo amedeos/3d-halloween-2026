@@ -131,6 +131,8 @@ uv run python -m vampire_coffin.render     # PNG previews -> out/render (add --g
 
 - PrusaSlicer reads `Metadata/Prusa_Slicer_custom_gcode_per_print_z.xml` even from a 3MF
   without print settings. That is how the M600 travels with the plates.
+- The `code` and `mode` elements need `bed_idx="0"` (PrusaSlicer 2.9 has multiple beds).
+  Without it the CLI still applies the colour change, but the GUI silently drops it.
 - The CLI crashes on `--export-3mf` without a display (it renders a thumbnail with
   OpenGL). So `slicer.py` slices to text G-code instead. It copies the
   `; prusaslicer_config` block into `Metadata/Slic3r_PE.config` and sets
