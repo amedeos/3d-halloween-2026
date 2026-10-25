@@ -76,6 +76,15 @@ def mesh_problems(part: Part) -> list[str]:
         return write_stl(part, Path(tmp) / "part.stl")
 
 
+BED_CENTRE = (BED[0] / 2, BED[1] / 2)  # PrusaSlicer arranges around the middle of the bed
+
+
+def _centred(part: Part, cx: float = BED_CENTRE[0], cy: float = BED_CENTRE[1]) -> Part:
+    """Move a part (already lying on z=0) so the centre of its footprint is at (cx, cy)."""
+    bb = part.bounding_box()
+    return Pos(cx - (bb.min.X + bb.max.X) / 2, cy - (bb.min.Y + bb.max.Y) / 2, 0) * part
+
+
 def _on_bed(part: Part, x_min: float, y_min: float) -> Part:
     """Move a part (already lying on z=0) so its footprint starts at (x_min, y_min)."""
     bb = part.bounding_box()
@@ -99,19 +108,24 @@ def plates() -> dict[str, tuple[list[tuple[str, Part, str]], tuple[float, str] |
     A colour change is (print_z, new colour): the M600 comes before the layer at print_z.
     """
     pp, cp = printable_parts(), coupon_parts()
-    nail = pp["nail_black_x2"]
-    box, n1, n2 = _row([pp["box_black"], nail, nail], gap=10)
+    # like PrusaSlicer's arrange: the box in the middle of the bed, one nail above it and
+    # one below it
+    box = _centred(pp["box_black"])
+    gap, half_nail = 8.0, pp["nail_black_x2"].bounding_box().size.Y / 2
+    half_box = box.bounding_box().size.Y / 2
+    n1 = _centred(pp["nail_black_x2"], cy=BED_CENTRE[1] + half_box + gap + half_nail)
+    n2 = _centred(pp["nail_black_x2"], cy=BED_CENTRE[1] - half_box - gap - half_nail)
     coupon_names = list(cp)
     coupon_colour = {"coupon_pelvis": "white"}
     return {
         "plate_1_black_box_and_nails": (
             [("box", box, "black"), ("nail", n1, "black"), ("nail", n2, "black")], None),
         "plate_2_lid_black_then_orange": (
-            [("lid", _row([pp["lid_black_M600_orange"]])[0], "black")],
+            [("lid", _centred(pp["lid_black_M600_orange"]), "black")],
             PLANNED_M600["plate_2_lid_black_then_orange"]),
         # the object colour is the starting filament; the M600 switches to the second one
         "plate_3_vampire_black_then_white": (
-            [("vampire", _row([pp["vampire_black_M600_white"]])[0], "black")],
+            [("vampire", _centred(pp["vampire_black_M600_white"]), "black")],
             PLANNED_M600["plate_3_vampire_black_then_white"]),
         "coupon_all_pieces": (
             [(n, p, coupon_colour.get(n, "black"))

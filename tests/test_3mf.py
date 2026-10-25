@@ -29,6 +29,21 @@ def test_plate_fits_the_bed_without_overlaps(name):
         assert apart
 
 
+@pytest.mark.parametrize("name", list(PLATES))
+def test_plate_is_centred_on_the_bed(name):
+    # PrusaSlicer arranges around the middle of the bed; the plates start there too
+    objects, _ = PLATES[name]
+    boxes = [part.bounding_box() for _, part, _ in objects]
+    x0, x1 = min(b.min.X for b in boxes), max(b.max.X for b in boxes)
+    y0, y1 = min(b.min.Y for b in boxes), max(b.max.Y for b in boxes)
+    assert (x0 + x1) / 2 == pytest.approx(BED[0] / 2, abs=0.5)
+    assert (y0 + y1) / 2 == pytest.approx(BED[1] / 2, abs=0.5)
+    main = boxes[0]  # box, lid, vampire: right in the middle
+    if len(objects) <= 3:
+        assert (main.min.X + main.max.X) / 2 == pytest.approx(BED[0] / 2, abs=0.01)
+        assert (main.min.Y + main.max.Y) / 2 == pytest.approx(BED[1] / 2, abs=0.01)
+
+
 def test_colour_changes_only_where_planned():
     # the lid's M600 would turn the box walls orange, so they never share a plate;
     # the coupon has no colour change (no pause during a quick fit test)
