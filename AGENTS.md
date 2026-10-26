@@ -65,7 +65,7 @@ uv run python -m vampire_coffin.render     # PNG previews -> out/render (add --g
 | `render.py` | numpy z-buffer renderer (no OpenGL), PNG and GIF. `listing()` makes every image for the Printables page: hero view from the feet (`FROM_FEET`), exploded view, cutaway of the mechanism, GIFs. |
 | `fonts/` | The bundled font, shipped inside the package |
 | `tests/` | pytest suite. Keep it green. |
-| `listing/` | Printables page text (`printables.md`) and the photo/video plan (`shot-list.md`) |
+| `listing/` | Local working notes, not tracked by git (`.gitignore`): Printables page text (`printables.md`) and the photo/video plan (`shot-list.md`) |
 
 ## Frames
 
