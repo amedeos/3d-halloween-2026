@@ -2,6 +2,8 @@
 
 An entry for the Printables contest **[Halloween 2026: Make It Move](https://www.printables.com/contest/533-halloween-2026)**.
 
+**Download, photos and print files:** [Nosferatu's Coffin on Printables](https://www.printables.com/model/1891545-nosferatus-coffin-slide-the-lid-and-the-vampire-si).
+
 A classic six-sided coffin. **Pull the lid towards you (towards the feet)**. Halfway through the movement, the vampire skeleton sits up to 70° and stares at you over the lid. Push the lid back and he lies down again.
 
 The vampire wears a black cape and a high collar, and he has fangs. He lies on a satin pillow on a quilted floor. There is a small candy stash at his feet.
